@@ -27,9 +27,9 @@ jobs:
           ref: ${{ inputs.branch }}
 
       - name: Markdownファイルの存在確認と検証
+        env:
+          MARKDOWN_FILE: ${{ inputs.markdown_file }}
         run: |
-          MARKDOWN_FILE="${{ inputs.markdown_file }}"
-          
           # パストラバーサル攻撃を防ぐため、'..'を含むパスを拒否
           if [[ "$MARKDOWN_FILE" == *".."* ]]; then
             echo "エラー: 不正なファイルパスです（'..'を含むパスは許可されていません）"
