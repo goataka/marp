@@ -17,13 +17,13 @@ on:
 jobs:
   generate-pdf:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: チェックアウト
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch }}
-      
+
       - name: Markdownファイルの存在確認
         run: |
           if [ ! -f "${{ inputs.markdown_file }}" ]; then
@@ -31,16 +31,16 @@ jobs:
             exit 1
           fi
           echo "✓ ${{ inputs.markdown_file }} が見つかりました"
-      
+
       - name: Marp CLIのセットアップ
         run: |
           npm install -g @marp-team/marp-cli
-      
+
       - name: PDFの生成
         run: |
           marp "${{ inputs.markdown_file }}" --pdf --allow-local-files
           echo "✓ PDFの生成が完了しました"
-      
+
       - name: 生成されたPDFのパス確認
         id: pdf_info
         run: |
@@ -48,14 +48,14 @@ jobs:
           PDF_FILE="${MARKDOWN_FILE%.md}.pdf"
           echo "pdf_file=$PDF_FILE" >> $GITHUB_OUTPUT
           ls -lh "$PDF_FILE"
-      
+
       - name: PDFをアーティファクトとしてアップロード
         uses: actions/upload-artifact@v4
         with:
           name: generated-pdf-${{ github.run_number }}
           path: ${{ steps.pdf_info.outputs.pdf_file }}
           retention-days: 30
-      
+
       - name: 完了メッセージ
         run: |
           echo "=================================================="
