@@ -59,14 +59,17 @@ jobs:
           npm install -g @marp-team/marp-cli
 
       - name: PDFの生成
+        env:
+          MARKDOWN_FILE: ${{ inputs.markdown_file }}
         run: |
-          marp "${{ inputs.markdown_file }}" --pdf
+          marp "$MARKDOWN_FILE" --pdf
           echo "✓ PDFの生成が完了しました"
 
       - name: 生成されたPDFのパス確認
         id: pdf_info
+        env:
+          MARKDOWN_FILE: ${{ inputs.markdown_file }}
         run: |
-          MARKDOWN_FILE="${{ inputs.markdown_file }}"
           PDF_FILE="${MARKDOWN_FILE%.md}.pdf"
           echo "pdf_file=$PDF_FILE" >> $GITHUB_OUTPUT
           ls -lh "$PDF_FILE"
@@ -79,11 +82,15 @@ jobs:
           retention-days: 30
 
       - name: 完了メッセージ
+        env:
+          BRANCH_NAME: ${{ inputs.branch }}
+          INPUT_FILE: ${{ inputs.markdown_file }}
+          OUTPUT_FILE: ${{ steps.pdf_info.outputs.pdf_file }}
         run: |
           echo "=================================================="
           echo "✓ PDF生成が完了しました！"
-          echo "ブランチ: ${{ inputs.branch }}"
-          echo "入力ファイル: ${{ inputs.markdown_file }}"
-          echo "出力ファイル: ${{ steps.pdf_info.outputs.pdf_file }}"
+          echo "ブランチ: $BRANCH_NAME"
+          echo "入力ファイル: $INPUT_FILE"
+          echo "出力ファイル: $OUTPUT_FILE"
           echo "=================================================="
           echo "生成されたPDFは「Artifacts」セクションからダウンロードできます。"
