@@ -24,13 +24,35 @@ jobs:
         with:
           ref: ${{ inputs.branch }}
 
-      - name: Markdownファイルの存在確認
+      - name: Markdownファイルの存在確認と検証
         run: |
-          if [ ! -f "${{ inputs.markdown_file }}" ]; then
-            echo "エラー: ${{ inputs.markdown_file }} が見つかりません"
+          MARKDOWN_FILE="${{ inputs.markdown_file }}"
+          
+          # パストラバーサル攻撃を防ぐため、'..'を含むパスを拒否
+          if [[ "$MARKDOWN_FILE" == *".."* ]]; then
+            echo "エラー: 不正なファイルパスです（'..'を含むパスは許可されていません）"
             exit 1
           fi
-          echo "✓ ${{ inputs.markdown_file }} が見つかりました"
+          
+          # ファイルパスが/で始まる場合（絶対パス）を拒否
+          if [[ "$MARKDOWN_FILE" == /* ]]; then
+            echo "エラー: 絶対パスは許可されていません"
+            exit 1
+          fi
+          
+          # .md拡張子を持つファイルのみ許可
+          if [[ "$MARKDOWN_FILE" != *.md ]]; then
+            echo "エラー: Markdownファイル（.md）のみ対応しています"
+            exit 1
+          fi
+          
+          # ファイルの存在確認
+          if [ ! -f "$MARKDOWN_FILE" ]; then
+            echo "エラー: $MARKDOWN_FILE が見つかりません"
+            exit 1
+          fi
+          
+          echo "✓ $MARKDOWN_FILE の検証に成功しました"
 
       - name: Marp CLIのセットアップ
         run: |
@@ -38,7 +60,7 @@ jobs:
 
       - name: PDFの生成
         run: |
-          marp "${{ inputs.markdown_file }}" --pdf --allow-local-files
+          marp "${{ inputs.markdown_file }}" --pdf
           echo "✓ PDFの生成が完了しました"
 
       - name: 生成されたPDFのパス確認
