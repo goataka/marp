@@ -26,7 +26,7 @@ Marp形式のMarkdownファイルには、フロントマターで`marp: true`�
 ```markdown
 ---
 marp: true
-theme: default
+theme: japanese
 paginate: true
 ---
 
@@ -40,6 +40,13 @@ paginate: true
 
 2枚目のスライドの内容
 ```
+
+### 日本語フォントについて
+
+PDFに日本語を正しく表示するため、`japanese`テーマを使用することを推奨します。このテーマは日本語フォント（Noto Sans CJK JP）を明示的に指定しています。
+
+デフォルトテーマを使用したい場合でも、ワークフローで日本語フォントがインストールされるため、日本語は正しく表示されます。
+
 
 ## サンプルファイル
 

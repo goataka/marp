@@ -1,0 +1,11 @@
+/* @theme japanese */
+
+@import 'default';
+
+section {
+  font-family: 'Noto Sans CJK JP', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+}
+
+code {
+  font-family: 'Noto Sans Mono CJK JP', 'Courier New', Courier, monospace;
+}

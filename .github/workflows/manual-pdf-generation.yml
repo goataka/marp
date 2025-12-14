@@ -56,6 +56,12 @@ jobs:
           
           echo "✓ $MARKDOWN_FILE の検証に成功しました"
 
+      - name: 日本語フォントのインストール
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk fonts-noto-cjk-extra
+          echo "✓ 日本語フォントのインストールが完了しました"
+
       - name: Marp CLIのセットアップ
         run: |
           npm install -g @marp-team/marp-cli
@@ -64,7 +70,7 @@ jobs:
         env:
           MARKDOWN_FILE: ${{ inputs.markdown_file }}
         run: |
-          marp "$MARKDOWN_FILE" --pdf
+          marp "$MARKDOWN_FILE" --pdf --allow-local-files --theme theme.css
           echo "✓ PDFの生成が完了しました"
 
       - name: 生成されたPDFのパス確認
