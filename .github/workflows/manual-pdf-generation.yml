@@ -1,0 +1,67 @@
+name: Manual PDF Generation
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'ブランチ名を指定してください'
+        required: true
+        default: 'main'
+        type: string
+      markdown_file:
+        description: 'Markdownファイルのパスを指定してください（例: example.md）'
+        required: true
+        default: 'example.md'
+        type: string
+
+jobs:
+  generate-pdf:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+      
+      - name: Markdownファイルの存在確認
+        run: |
+          if [ ! -f "${{ inputs.markdown_file }}" ]; then
+            echo "エラー: ${{ inputs.markdown_file }} が見つかりません"
+            exit 1
+          fi
+          echo "✓ ${{ inputs.markdown_file }} が見つかりました"
+      
+      - name: Marp CLIのセットアップ
+        run: |
+          npm install -g @marp-team/marp-cli
+      
+      - name: PDFの生成
+        run: |
+          marp "${{ inputs.markdown_file }}" --pdf --allow-local-files
+          echo "✓ PDFの生成が完了しました"
+      
+      - name: 生成されたPDFのパス確認
+        id: pdf_info
+        run: |
+          MARKDOWN_FILE="${{ inputs.markdown_file }}"
+          PDF_FILE="${MARKDOWN_FILE%.md}.pdf"
+          echo "pdf_file=$PDF_FILE" >> $GITHUB_OUTPUT
+          ls -lh "$PDF_FILE"
+      
+      - name: PDFをアーティファクトとしてアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-pdf-${{ github.run_number }}
+          path: ${{ steps.pdf_info.outputs.pdf_file }}
+          retention-days: 30
+      
+      - name: 完了メッセージ
+        run: |
+          echo "=================================================="
+          echo "✓ PDF生成が完了しました！"
+          echo "ブランチ: ${{ inputs.branch }}"
+          echo "入力ファイル: ${{ inputs.markdown_file }}"
+          echo "出力ファイル: ${{ steps.pdf_info.outputs.pdf_file }}"
+          echo "=================================================="
+          echo "生成されたPDFは「Artifacts」セクションからダウンロードできます。"
