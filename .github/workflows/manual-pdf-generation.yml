@@ -1,0 +1,98 @@
+name: Manual PDF Generation
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'ブランチ名を指定してください'
+        required: true
+        default: 'main'
+        type: string
+      markdown_file:
+        description: 'Markdownファイルのパスを指定してください（例: example.md）'
+        required: true
+        default: 'example.md'
+        type: string
+
+jobs:
+  generate-pdf:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Markdownファイルの存在確認と検証
+        env:
+          MARKDOWN_FILE: ${{ inputs.markdown_file }}
+        run: |
+          # パストラバーサル攻撃を防ぐため、'..'を含むパスを拒否
+          if [[ "$MARKDOWN_FILE" == *".."* ]]; then
+            echo "エラー: 不正なファイルパスです（'..'を含むパスは許可されていません）"
+            exit 1
+          fi
+          
+          # ファイルパスが/で始まる場合（絶対パス）を拒否
+          if [[ "$MARKDOWN_FILE" == /* ]]; then
+            echo "エラー: 絶対パスは許可されていません"
+            exit 1
+          fi
+          
+          # .md拡張子を持つファイルのみ許可
+          if [[ "$MARKDOWN_FILE" != *.md ]]; then
+            echo "エラー: Markdownファイル（.md）のみ対応しています"
+            exit 1
+          fi
+          
+          # ファイルの存在確認
+          if [ ! -f "$MARKDOWN_FILE" ]; then
+            echo "エラー: $MARKDOWN_FILE が見つかりません"
+            exit 1
+          fi
+          
+          echo "✓ $MARKDOWN_FILE の検証に成功しました"
+
+      - name: Marp CLIのセットアップ
+        run: |
+          npm install -g @marp-team/marp-cli
+
+      - name: PDFの生成
+        env:
+          MARKDOWN_FILE: ${{ inputs.markdown_file }}
+        run: |
+          marp "$MARKDOWN_FILE" --pdf
+          echo "✓ PDFの生成が完了しました"
+
+      - name: 生成されたPDFのパス確認
+        id: pdf_info
+        env:
+          MARKDOWN_FILE: ${{ inputs.markdown_file }}
+        run: |
+          PDF_FILE="${MARKDOWN_FILE%.md}.pdf"
+          echo "pdf_file=$PDF_FILE" >> $GITHUB_OUTPUT
+          ls -lh "$PDF_FILE"
+
+      - name: PDFをアーティファクトとしてアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-pdf-${{ github.run_number }}
+          path: ${{ steps.pdf_info.outputs.pdf_file }}
+          retention-days: 30
+
+      - name: 完了メッセージ
+        env:
+          BRANCH_NAME: ${{ inputs.branch }}
+          INPUT_FILE: ${{ inputs.markdown_file }}
+          OUTPUT_FILE: ${{ steps.pdf_info.outputs.pdf_file }}
+        run: |
+          echo "=================================================="
+          echo "✓ PDF生成が完了しました！"
+          echo "ブランチ: $BRANCH_NAME"
+          echo "入力ファイル: $INPUT_FILE"
+          echo "出力ファイル: $OUTPUT_FILE"
+          echo "=================================================="
+          echo "生成されたPDFは「Artifacts」セクションからダウンロードできます。"
